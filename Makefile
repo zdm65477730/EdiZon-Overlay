@@ -9,22 +9,21 @@ endif
 TOPDIR ?= $(CURDIR)
 include $(DEVKITPRO)/libnx/switch_rules
 
-ifeq ($(SNAPSHOT), 1)
-	APP_VERSION	:=	${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO} Snapshot
-else
-	APP_VERSION	:=	${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}
-endif
-
-APP_TITLE		:=	EdiZon
+APP_TITLE		=	EdiZon
+export APP_TITLE
 APP_AUTHOR		:=	WerWolv & proferabg
 APP_VERSION		:=	v1.0.8
 
-TARGET			:=	EdiZon
+ifeq ($(RELEASE),)
+	APP_VERSION	:=	$(APP_VERSION)-$(shell git describe --always)
+endif
+
+TARGET			:=	$(APP_TITLE)
 OUTDIR			:=	out
 BUILD			:=	build
 SOURCES_TOP		:=	source libs/libtesla/source
 SOURCES			+=  $(foreach dir,$(SOURCES_TOP),$(shell find $(dir) -type d 2>/dev/null))
-INCLUDES		:=	include libs/EdiZon-SE/include libs/libtesla/include 
+INCLUDES		:=	include EdiZon-SE/include libs/libtesla/include
 #EXCLUDES		:=  dmntcht.c
 DATA			:=	data
 #---------------------------------------------------------------------------------
@@ -41,8 +40,8 @@ CFLAGS	:=	-g -Wall -O3 -ffunction-sections \
 			-DVERSION_MINOR=${VERSION_MINOR} \
 			-DVERSION_MICRO=${VERSION_MICRO} \
 			-DVERSION_STRING=\"$(subst $(SPACE),\$(SPACE),${APP_VERSION})\"
-      
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -D__OVERLAY__ -I$(PORTLIBS)/include/freetype2 $(pkg-config --cflags --libs python3) -Wno-deprecated-declarations
+
+CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -D__OVERLAY__ -I$(PORTLIBS)/include/freetype2 $(pkg-config --cflags --libs python3) -Wno-deprecated-declarations -DVERSION=\"$(APP_VERSION)\" -DAPPTITLE=\"$(APP_TITLE)\"
 
 CXXFLAGS	:= $(CFLAGS) -fexceptions -std=gnu++20
 
@@ -65,7 +64,7 @@ LIBDIRS	:= $(CURDIR)/libs/nxpy $(PORTLIBS) $(LIBNX)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(OUTDIR)/ovlEdiZon
+export OUTPUT	:=	$(CURDIR)/$(OUTDIR)/$(APP_TITLE)
 export TOPDIR	:=	$(CURDIR)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
@@ -135,7 +134,7 @@ ifeq ($(strip $(NO_ICON)),)
 endif
 
 ifeq ($(strip $(NO_NACP)),)
-	export NROFLAGS += --nacp=$(CURDIR)/$(OUTDIR)/ovlEdiZon.nacp
+	export NROFLAGS += --nacp=$(OUTPUT).nacp
 endif
 
 ifneq ($(APP_TITLEID),)
@@ -152,18 +151,28 @@ endif
 all: $(BUILD)
 
 $(BUILD):
+	@$(MAKE) --no-print-directory -C $(CURDIR)/EdiZon-SE
 	@[ -d $@ ] || mkdir -p $@ $(BUILD) $(OUTDIR)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@cp -rf $(OUTPUT).nro $(OUTPUT).ovl
+	@rm -rf SdOut
+	@mkdir -p SdOut/switch/$(APP_TITLE)
+	@mkdir -p SdOut/switch/.overlays/lang/$(APP_TITLE)
+	@cp -rf $(OUTPUT).ovl SdOut/switch/.overlays/
+	@cp -rf $(CURDIR)/lang/* SdOut/switch/.overlays/lang/$(APP_TITLE)/
+	@cp -rf $(CURDIR)/EdiZon-SE/out/$(APP_TITLE).nro SdOut/switch/$(APP_TITLE)/
+	@cd $(CURDIR)/SdOut; zip -r -q -9 $(APP_TITLE).zip switch; cd $(CURDIR)
 
 #---------------------------------------------------------------------------------
 clean:
-	@echo " RM   " $(BUILD) $(OUTDIR)
-	@rm -fr $(BUILD) $(OUTDIR)
+	@$(MAKE) --no-print-directory -C $(CURDIR)/EdiZon-SE clean
+	@echo " RM   " $(BUILD) $(OUTDIR) SdOut
+	@rm -fr $(BUILD) $(OUTDIR) SdOut
 
 #---------------------------------------------------------------------------------
 install: all
 	@echo " LFTP " $@
-	@lftp -e "put -O /switch/.overlays ./out/ovlEdiZon.ovl;bye" $(IP)
+	@lftp -e "put -O /switch/.overlays ./out/$(APP_TITLE).ovl;bye" $(IP)
 
 #---------------------------------------------------------------------------------
 else

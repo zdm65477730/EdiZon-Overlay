@@ -1,6 +1,6 @@
-[submodule "libs/EdiZon-SE"]
-	path = libs/EdiZon-SE
-	url = https://github.com/tomvita/EdiZon-SE.git
 [submodule "libs/libtesla"]
 	path = libs/libtesla
-	url = https://github.com/WerWolv/libtesla.git
+	url = https://github.com/zdm65477730/libtesla.git
+[submodule "EdiZon-SE"]
+	path = EdiZon-SE
+	url = https://github.com/zdm65477730/EdiZon-SE.git

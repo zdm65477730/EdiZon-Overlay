@@ -170,14 +170,18 @@ namespace edz::cheat {
         if (!CheatManager::isCheatServiceAvailable())
             return ResultEdzCheatServiceNotAvailable;
 
+        Result ret = ResultEdzAttachFailed;
         uint64_t PID = 0;
-        for(int i = 0; i < 10; i++) {
+        int64_t timeout = 1000'000'000;
+        while (timeout) {
             if (R_SUCCEEDED(pmdmntGetApplicationProcessId(&PID))) {
-                return dmntchtForceOpenCheatProcess();
+                ret = dmntchtForceOpenCheatProcess();
+                break;
             }
-            svcSleepThread(100'000'000);
+            timeout -= 10'000'000;
+            svcSleepThread(10'000'000);
         }
-        return ResultEdzAttachFailed;
+        return ret;
     }
 
     bool CheatManager::hasCheatProcess() {
@@ -360,7 +364,6 @@ namespace edz::cheat {
         if (res = dmntchtGetCheatProcessMetadata(&CheatManager::s_processMetadata); !Succeeded(res))
             return res;
 
-
         // Get all loaded cheats
         u64 cheatCnt = 0;
         if (res = dmntchtGetCheatCount(&cheatCnt); !Succeeded(res))
@@ -374,7 +377,6 @@ namespace edz::cheat {
         CheatManager::s_cheats.reserve(cheatCnt);
         for (u32 i = 0; i < cheatCnt; i++)
             CheatManager::s_cheats.push_back(new Cheat(cheatEntries[i]));
-
 
         // Get all frozen addresses
         u64 frozenAddressCnt = 0;
