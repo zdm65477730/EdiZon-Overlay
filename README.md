@@ -2,18 +2,15 @@
 
 Originally by [@WerWolv](https://www.github.com/WerWolv)
 
-Continued Support by proferabg & ppkantorski
+Continued Support by proferabg
 <br />
 <br />
 
-# Latest Changelog - v1.0.9
-    Updated libnx.
-    Now utilizing libtesla (Ultrahand) & libultra.
-    Custom wallpaper / theme support.
-    Users can override the system wallpaper / theme with `sdmc:/config/edizon/wallpaper.rgba` and `sdmc:/config/edizon/theme.ini`.
-    Faster opening / game detection.
-    Fix for local IP calls.
-    Temperature readings are now done through i2c.
+# Latest Changelog - v1.0.8
+
+    Updated libnx
+    Fixed temperature rendering
+    Added Enabling Cheats by Default on Overlay Open
 <br />
 
 # How To Use Submenus

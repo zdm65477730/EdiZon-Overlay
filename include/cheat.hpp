@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <edizon.h>
+#include <helpers/util.h>
 #include "dmntcht.h"
 #include "cheat_engine_types.hpp"
 #include "result.hpp"

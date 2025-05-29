@@ -1,3 +1,6 @@
-[submodule "libs/libultrahand"]
-	path = libs/libultrahand
-	url = https://github.com/ppkantorski/libultrahand
+[submodule "libs/libtesla"]
+	path = libs/libtesla
+	url = https://github.com/zdm65477730/libtesla.git
+[submodule "EdiZon-SE"]
+	path = EdiZon-SE
+	url = https://github.com/zdm65477730/EdiZon-SE.git
