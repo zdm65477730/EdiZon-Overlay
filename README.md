@@ -2,12 +2,15 @@
 
 Originally by [@WerWolv](https://www.github.com/WerWolv)
 
-Continued Support by proferabg & ppkantorski
+Continued Support by proferabg
 <br />
 <br />
 
-# Latest Changelog - v1.0.10
-    Updated libultrahand (fixes #33)
+# Latest Changelog - v1.0.8
+
+    Updated libnx
+    Fixed temperature rendering
+    Added Enabling Cheats by Default on Overlay Open
 <br />
 
 # How To Use Submenus
