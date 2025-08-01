@@ -16,7 +16,7 @@ jobs:
         run: |
           sudo -n apt-get update && sudo -n apt-get install -y \
             build-essential zip python3 python3-pip python3-lz4 \
-            git wget cmake  # 新增编译工具
+            git wget cmake pkg-config
         shell: bash
 
       - name: Install devkitPro packages
@@ -29,39 +29,50 @@ jobs:
             switch-zlib switch-libpng switch-mesa general-tools \
             switch-portlibs switch-harfbuzz
           
-          # 检查switch-freetype包是否包含freetype-config
-          echo "Checking switch-freetype package contents..."
-          dkp-pacman -Ql switch-freetype | grep -i "freetype-config" || echo "switch-freetype has no freetype-config"
+          # 确认switch-libpng的pkg-config文件是否存在
+          echo "Checking switch-libpng pkg-config file..."
+          ls -la /opt/devkitpro/portlibs/switch/lib/pkgconfig/libpng.pc || echo "libpng.pc not found"
         shell: bash
 
-      - name: Manually build FreeType (to get freetype-config)
+      - name: Manually build FreeType (with proper cross-compile config)
         run: |
-          # 如果官方包没有freetype-config，手动编译安装
           export DEVKITPRO=/opt/devkitpro
           export DEVKITA64=$DEVKITPRO/devkitA64
           export PORTLIBS=$DEVKITPRO/portlibs/switch
           
+          # 关键：设置交叉编译工具链和pkg-config路径
+          export CC=aarch64-none-elf-gcc
+          export CXX=aarch64-none-elf-g++
+          export AR=aarch64-none-elf-ar
+          export RANLIB=aarch64-none-elf-ranlib
+          export PKG_CONFIG_PATH=$PORTLIBS/lib/pkgconfig  # 指向Switch平台的pkg-config文件
+          export PKG_CONFIG_LIBDIR=$PKG_CONFIG_PATH
+          
           # 创建工作目录
           mkdir -p freetype-build && cd freetype-build
           
-          # 下载FreeType源码（使用与switch-freetype匹配的版本，这里以2.13.3为例）
+          # 下载FreeType源码（与之前版本一致）
           wget https://download.savannah.gnu.org/releases/freetype/freetype-2.13.3.tar.xz
           tar -xf freetype-2.13.3.tar.xz && cd freetype-2.13.3
           
-          # 配置编译（针对Switch平台）
+          # 配置编译（显式指定交叉编译工具和依赖路径）
           ./configure \
             --prefix=$PORTLIBS \
             --host=aarch64-none-elf \
             --with-png=yes \
             --with-harfbuzz=yes \
             --enable-shared=no \
-            --enable-static=yes
+            --enable-static=yes \
+            --with-zlib=$PORTLIBS \
+            --with-bzip2=$PORTLIBS \
+            CPPFLAGS="-I$PORTLIBS/include" \
+            LDFLAGS="-L$PORTLIBS/lib"
           
-          # 编译并安装（会生成freetype-config）
+          # 编译并安装
           make -j$(nproc)
           make install
           
-          # 验证freetype-config是否安装成功
+          # 验证结果
           ls -la $PORTLIBS/bin/freetype-config
           $PORTLIBS/bin/freetype-config --version
         shell: bash
@@ -90,7 +101,7 @@ jobs:
           echo "TAG=${VERSION}" >> "${GITHUB_ENV}"
           echo "RELEASE_NAME=EdiZon ${VERSION}" >> "${GITHUB_ENV}"
           echo "PORTLIBS=/opt/devkitpro/portlibs/switch" >> "${GITHUB_ENV}"
-          echo "PATH=$PATH:$PORTLIBS/bin" >> "${GITHUB_ENV}"  # 确保freetype-config在PATH中
+          echo "PATH=$PATH:$PORTLIBS/bin" >> "${GITHUB_ENV}"
         shell: bash
 
       - name: Build
@@ -98,10 +109,7 @@ jobs:
           export DEVKITPRO=/opt/devkitpro
           export DEVKITA64=$DEVKITPRO/devkitA64
           export PATH=$PATH:$PORTLIBS/bin
-          
-          # 显式使用手动安装的freetype-config
-          echo "Freetype CFLAGS: $($PORTLIBS/bin/freetype-config --cflags)"
-          echo "Freetype LIBS: $($PORTLIBS/bin/freetype-config --libs)"
+          export PKG_CONFIG_PATH=$PORTLIBS/lib/pkgconfig
           
           make all
         shell: bash
