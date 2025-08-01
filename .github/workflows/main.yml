@@ -21,7 +21,6 @@ jobs:
 
       - name: Install devkitPro packages
         run: |
-          sudo dkp-pacman --noconfirm -Syu  # 先更新包数据库
           sudo dkp-pacman --noconfirm -S \
             devkitA64 libnx switch-tools \
             switch-curl switch-bzip2 switch-freetype \
