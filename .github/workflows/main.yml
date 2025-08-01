@@ -12,71 +12,11 @@ jobs:
     if: contains(github.event.comment.body, '/release-action')
 
     steps:
-      - name: Update system packages
+      - name: Update packages
         run: |
-          sudo -n apt-get update && sudo -n apt-get install -y \
-            build-essential zip python3 python3-pip python3-lz4 \
-            git wget cmake pkg-config
+          sudo -n apt-get install -y build-essential zip python3 python3-pip python3-lz4
+          sudo dkp-pacman --noconfirm -S devkitA64 libnx switch-freetype switch-portlibs switch-tools switch-curl switch-libpng switch-harfbuzz switch-bzip2
         shell: bash
-
-      - name: Install devkitPro packages
-        run: |
-          sudo dkp-pacman --noconfirm -S \
-            devkitA64 libnx switch-tools \
-            switch-curl switch-bzip2 switch-freetype \
-            switch-libjpeg-turbo switch-libwebp switch-sdl2 \
-            switch-sdl2_gfx switch-sdl2_image switch-sdl2_ttf \
-            switch-zlib switch-libpng switch-mesa general-tools \
-            switch-portlibs switch-harfbuzz
-          
-          # 确认switch-libpng的pkg-config文件是否存在
-          echo "Checking switch-libpng pkg-config file..."
-          ls -la /opt/devkitpro/portlibs/switch/lib/pkgconfig/libpng.pc || echo "libpng.pc not found"
-        shell: bash
-
-      - name: Manually build FreeType (with proper cross-compile config)
-        run: |
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITA64=$DEVKITPRO/devkitA64
-          export PORTLIBS=$DEVKITPRO/portlibs/switch
-          
-          # 关键：设置交叉编译工具链和pkg-config路径
-          export CC=aarch64-none-elf-gcc
-          export CXX=aarch64-none-elf-g++
-          export AR=aarch64-none-elf-ar
-          export RANLIB=aarch64-none-elf-ranlib
-          export PKG_CONFIG_PATH=$PORTLIBS/lib/pkgconfig  # 指向Switch平台的pkg-config文件
-          export PKG_CONFIG_LIBDIR=$PKG_CONFIG_PATH
-          
-          # 创建工作目录
-          mkdir -p freetype-build && cd freetype-build
-          
-          # 下载FreeType源码（与之前版本一致）
-          wget https://download.savannah.gnu.org/releases/freetype/freetype-2.13.3.tar.xz
-          tar -xf freetype-2.13.3.tar.xz && cd freetype-2.13.3
-          
-          # 配置编译（显式指定交叉编译工具和依赖路径）
-          ./configure \
-            --prefix=$PORTLIBS \
-            --host=aarch64-none-elf \
-            --with-png=yes \
-            --with-harfbuzz=yes \
-            --enable-shared=no \
-            --enable-static=yes \
-            --with-zlib=$PORTLIBS \
-            --with-bzip2=$PORTLIBS \
-            CPPFLAGS="-I$PORTLIBS/include" \
-            LDFLAGS="-L$PORTLIBS/lib"
-          
-          # 编译并安装
-          make -j$(nproc)
-          make install
-          
-          # 验证结果
-          ls -la $PORTLIBS/bin/freetype-config
-          $PORTLIBS/bin/freetype-config --version
-        shell: bash
-
       - name: Update latest libnx
         run: |
           git config --global --add safe.directory "*"
@@ -84,7 +24,6 @@ jobs:
           cd libnx
           make install -j$(nproc)
         shell: bash
-
       - name: Checkout latest code
         uses: actions/checkout@v4.1.1
         with:
@@ -93,27 +32,23 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
           submodules: recursive
-
       - name: Setup ENV parameters
         run: |
           VER_FILE=Makefile
           VERSION=$(awk '/^APP_VERSION/{print $3}' $VER_FILE)
           echo "TAG=${VERSION}" >> "${GITHUB_ENV}"
           echo "RELEASE_NAME=EdiZon ${VERSION}" >> "${GITHUB_ENV}"
-          echo "PORTLIBS=/opt/devkitpro/portlibs/switch" >> "${GITHUB_ENV}"
-          echo "PATH=$PATH:$PORTLIBS/bin" >> "${GITHUB_ENV}"
         shell: bash
-
       - name: Build
         run: |
           export DEVKITPRO=/opt/devkitpro
+          export DEVKITPRO=/opt/devkitpro
           export DEVKITA64=$DEVKITPRO/devkitA64
-          export PATH=$PATH:$PORTLIBS/bin
-          export PKG_CONFIG_PATH=$PORTLIBS/lib/pkgconfig
-          
+          export PORTLIBS_SWITCH=$DEVKITPRO/portlibs/switch
+          export PATH=$PORTLIBS_SWITCH/bin:$PATH
+          freetype-config --libs
           make all
         shell: bash
-
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2.0.9
         with:
