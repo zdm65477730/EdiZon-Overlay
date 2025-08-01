@@ -15,7 +15,7 @@ jobs:
       - name: Update packages
         run: |
           sudo -n apt-get install -y build-essential zip python3 python3-pip python3-lz4
-          sudo dkp-pacman --noconfirm -S devkitA64 libnx switch-freetype switch-portlibs switch-tools switch-curl
+          sudo dkp-pacman --noconfirm -S devkitA64 libnx switch-freetype switch-portlibs switch-tools switch-curl switch-libpng switch-harfbuzz switch-bzip2
         shell: bash
       - name: Update latest libnx
         run: |
