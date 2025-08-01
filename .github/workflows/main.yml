@@ -15,7 +15,7 @@ jobs:
       - name: Update packages
         run: |
           sudo -n apt-get install -y build-essential zip python3 python3-pip python3-lz4
-          sudo dkp-pacman --noconfirm -S switch-freetype switch-portlibs devkitA64 libnx switch-tools
+          sudo dkp-pacman --noconfirm -S devkitA64 libnx switch-freetype switch-portlibs switch-tools switch-curl
         shell: bash
       - name: Update latest libnx
         run: |
@@ -42,16 +42,10 @@ jobs:
       - name: Build
         run: |
           export DEVKITPRO=/opt/devkitpro
-          echo $DEVKITPRO      # 应输出：/opt/devkitpro
-          echo $DEVKITA64      # 应输出：/opt/devkitpro/devkitA64
-          echo $PORTLIBS_SWITCH # 应输出：/opt/devkitpro/portlibs/switch
           export DEVKITPRO=/opt/devkitpro
           export DEVKITA64=$DEVKITPRO/devkitA64
           export PORTLIBS_SWITCH=$DEVKITPRO/portlibs/switch
           export PATH=$DEVKITA64/bin:$PATH
-          ls $PORTLIBS_SWITCH/lib/libfreetype.a
-          ls $PORTLIBS_SWITCH/include/freetype2/ft2build.h
-          ls $DEVKITPRO/libnx/lib/libnx.a
           make all
         shell: bash
       - name: Upload Release Asset
