@@ -45,7 +45,7 @@ jobs:
           export DEVKITPRO=/opt/devkitpro
           export DEVKITA64=$DEVKITPRO/devkitA64
           export PORTLIBS_SWITCH=$DEVKITPRO/portlibs/switch
-          export PATH=$DEVKITA64/bin:$PATH
+          export PATH=$PORTLIBS_SWITCH/bin:$PATH
           freetype-config --libs
           make all
         shell: bash
