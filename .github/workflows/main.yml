@@ -15,6 +15,7 @@ jobs:
       - name: Update packages
         run: |
           sudo -n apt-get install -y zip python3 python3-pip python3-lz4 libfreetype6-dev
+          sudo dkp-pacman --noconfirm -S devkitA64 libnx switch-tools switch-curl switch-bzip2 switch-freetype switch-libjpeg-turbo switch-libwebp switch-sdl2 switch-sdl2_gfx switch-sdl2_image switch-sdl2_ttf switch-zlib switch-libpng switch-mesa general-tools switch-portlibs switch-harfbuzz
         shell: bash
       - name: Update latest libnx
         run: |
