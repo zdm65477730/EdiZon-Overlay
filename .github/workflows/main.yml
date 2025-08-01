@@ -15,6 +15,7 @@ jobs:
       - name: Update packages
         run: |
           sudo -n apt-get install -y zip python3 python3-pip python3-lz4
+          sudo dkp-pacman --noconfirm -S switch-portlibs switch-freetype
         shell: bash
       - name: Update latest libnx
         run: |
