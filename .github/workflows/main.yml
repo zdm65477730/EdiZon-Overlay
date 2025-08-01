@@ -46,6 +46,7 @@ jobs:
           export DEVKITA64=$DEVKITPRO/devkitA64
           export PORTLIBS_SWITCH=$DEVKITPRO/portlibs/switch
           export PATH=$DEVKITA64/bin:$PATH
+          freetype-config --libs
           make all
         shell: bash
       - name: Upload Release Asset
