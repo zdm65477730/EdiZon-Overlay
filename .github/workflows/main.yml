@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Update packages
         run: |
-          sudo -n apt-get install -y zip python3 python3-pip python3-lz4
+          sudo -n apt-get install -y build-essential zip python3 python3-pip python3-lz4 libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-gfx-dev zlib1g-dev gcc g++ libcurl4-openssl-dev wget git libsdl1.2-dev libsdl-ttf2.0-dev libsdl-image1.2-dev libsdl-gfx1.2-dev jq
           sudo dkp-pacman --noconfirm -S switch-freetype switch-portlibs
         shell: bash
       - name: Update latest libnx
