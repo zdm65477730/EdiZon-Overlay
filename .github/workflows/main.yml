@@ -14,9 +14,17 @@ jobs:
     steps:
       - name: Update packages
         run: |
+          # 确保所有依赖包正确安装
           sudo -n apt-get install -y build-essential zip python3 python3-pip python3-lz4
-          sudo dkp-pacman --noconfirm -S devkitA64 libnx switch-tools switch-curl switch-bzip2 switch-freetype switch-libjpeg-turbo switch-libwebp switch-sdl2 switch-sdl2_gfx switch-sdl2_image switch-sdl2_ttf switch-zlib switch-libpng switch-mesa general-tools switch-portlibs switch-harfbuzz
+          sudo dkp-pacman --noconfirm -S \
+            devkitA64 libnx switch-tools \
+            switch-curl switch-bzip2 switch-freetype \
+            switch-libjpeg-turbo switch-libwebp switch-sdl2 \
+            switch-sdl2_gfx switch-sdl2_image switch-sdl2_ttf \
+            switch-zlib switch-libpng switch-mesa general-tools \
+            switch-portlibs switch-harfbuzz
         shell: bash
+
       - name: Update latest libnx
         run: |
           git config --global --add safe.directory "*"
@@ -24,6 +32,7 @@ jobs:
           cd libnx
           make install -j$(nproc)
         shell: bash
+
       - name: Checkout latest code
         uses: actions/checkout@v4.1.1
         with:
@@ -32,20 +41,40 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
           submodules: recursive
+
       - name: Setup ENV parameters
         run: |
           VER_FILE=Makefile
           VERSION=$(awk '/^APP_VERSION/{print $3}' $VER_FILE)
           echo "TAG=${VERSION}" >> "${GITHUB_ENV}"
           echo "RELEASE_NAME=EdiZon ${VERSION}" >> "${GITHUB_ENV}"
+          # 显式设置portlibs路径并添加到PATH
+          echo "PORTLIBS=/opt/devkitpro/portlibs/switch" >> "${GITHUB_ENV}"
+          echo "PATH=$PATH:/opt/devkitpro/portlibs/switch/bin" >> "${GITHUB_ENV}"
         shell: bash
-      - name: Build
+
+      - name: Verify freetype-config exists
+        run: |
+          # 检查freetype-config是否存在，确认路径正确性
+          echo "Checking freetype-config path..."
+          ls -la $PORTLIBS/bin/freetype-config || echo "freetype-config not found in $PORTLIBS/bin"
+          # 打印版本信息确认工具可用
+          $PORTLIBS/bin/freetype-config --version || echo "freetype-config is not functional"
+        shell: bash
+
+      - name: Build with explicit freetype-config path
         run: |
           export DEVKITPRO=/opt/devkitpro
-          echo $PORTLIBS
-          ls $DEVKITPRO/portlibs/switch/bin/freetype-config
+          export PATH=$PATH:$PORTLIBS/bin  # 确保PATH包含portlibs的bin目录
+          # 编译时显式通过环境变量传递freetype的CFLAGS和LIBS
+          export FREETYPE_CFLAGS=$($PORTLIBS/bin/freetype-config --cflags)
+          export FREETYPE_LIBS=$($PORTLIBS/bin/freetype-config --libs)
+          echo "Freetype CFLAGS: $FREETYPE_CFLAGS"
+          echo "Freetype LIBS: $FREETYPE_LIBS"
+          # 执行编译（如果Makefile支持环境变量传递，则无需修改Makefile）
           make all
         shell: bash
+
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2.0.9
         with:
